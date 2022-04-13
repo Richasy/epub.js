@@ -472,7 +472,8 @@ class DefaultViewManager {
 			this.scrollLeft = this.container.scrollLeft;
 
 			if (this.settings.rtlScrollType === "default") {
-				left = this.container.scrollLeft;
+				this.scrollLeft = Math.floor(this.container.scrollLeft);
+				left = Math.floor(this.container.scrollLeft);
 
 				if (left > 0) {
 					this.scrollBy(this.layout.delta, 0, true);
@@ -491,9 +492,9 @@ class DefaultViewManager {
 
 		} else if (this.isPaginated && this.settings.axis === "vertical") {
 
-			this.scrollTop = this.container.scrollTop;
+			this.scrollTop = Math.floor(this.container.scrollTop);
 
-			let top = this.container.scrollTop + this.container.offsetHeight;
+			let top = Math.floor(this.container.scrollTop + this.container.offsetHeight);
 
 			if (top < this.container.scrollHeight) {
 				this.scrollBy(0, this.layout.height, true);
@@ -660,7 +661,7 @@ class DefaultViewManager {
 
 	currentLocation() {
 		this.updateLayout();
-		if (this.isPaginated && this.settings.axis === "horizontal") {
+		if (this.isPaginated) {
 			this.location = this.paginatedLocation();
 		} else {
 			this.location = this.scrolledLocation();
@@ -740,12 +741,15 @@ class DefaultViewManager {
 	paginatedLocation() {
 		let visible = this.visible();
 		let container = this.container.getBoundingClientRect();
+		let vertical = (this.settings.axis === "vertical");
 
 		let left = 0;
+		let top = 0;
 		let used = 0;
 
 		if (this.settings.fullsize) {
 			left = window.scrollX;
+			top = window.scrollY;
 		}
 
 		let sections = visible.map((view) => {
@@ -753,32 +757,43 @@ class DefaultViewManager {
 			let offset;
 			let position = view.position();
 			let width = view.width();
+			let height = view.height();
 
 			// Find mapping
 			let start;
 			let end;
 			let pageWidth;
 
-			if (this.settings.direction === "rtl") {
+			if (!vertical && this.settings.direction === "rtl") {
 				offset = container.right - left;
 				pageWidth = Math.min(Math.abs(offset - position.left), this.layout.width) - used;
 				end = position.width - (position.right - offset) - used;
 				start = end - pageWidth;
 			} else {
-				offset = container.left + left;
-				pageWidth = Math.min(position.right - offset, this.layout.width) - used;
-				start = offset - position.left + used;
-				end = start + pageWidth;
+				if (vertical) {
+					offset = container.top + top;
+					pageHeight = Math.min(position.bottom - offset, this.layout.height) - used;
+					start = offset - position.top + used;
+					end = start + pageHeight;
+				} else {
+					offset = container.left + left;
+					pageWidth = Math.min(position.right - offset, this.layout.width) - used;
+					start = offset - position.left + used;
+					end = start + pageWidth;
+				}
 			}
 
-			used += pageWidth;
+			start = Math.ceil(start);
+			end = Math.ceil(end);
+
+			used += vertical ? pageHeight : pageWidth;
 
 			let mapping = this.mapping.page(view.contents, view.section.cfiBase, start, end);
 
-			let totalPages = this.layout.count(width).pages;
-			let startPage = Math.floor(start / this.layout.pageWidth);
+			let totalPages = this.layout.count(vertical ? height : width).pages;
+			let startPage = Math.floor(start / (vertical ? this.layout.pageHeight : this.layout.pageWidth));
 			let pages = [];
-			let endPage = Math.floor(end / this.layout.pageWidth);
+			let endPage = Math.floor(end / (vertical ? this.layout.pageHeight : this.layout.pageWidth));
 
 			// start page should not be negative
 			if (startPage < 0) {
@@ -787,7 +802,7 @@ class DefaultViewManager {
 			}
 
 			// Reverse page counts for rtl
-			if (this.settings.direction === "rtl") {
+			if (!vertical && this.settings.direction === "rtl") {
 				let tempStartPage = startPage;
 				startPage = totalPages - endPage;
 				endPage = totalPages - tempStartPage;
@@ -860,8 +875,19 @@ class DefaultViewManager {
 		}
 
 		if (!this.settings.fullsize) {
-			if (x) this.container.scrollLeft += x * dir;
-			if (y) this.container.scrollTop += y;
+			let scrollLeft = this.container.scrollLeft + (x * dir);
+			let scrollTop = this.container.scrollTop + y;
+
+			if (x && this.container.scrollLeft % x != 0) {
+				scrollLeft = Math.round(scrollLeft / x) * x;
+			}
+
+			if (y && this.container.scrollTop % y != 0) {
+				scrollTop = Math.round(scrollTop / y) * y;
+			}
+
+			if (x) this.container.scrollLeft = scrollLeft;
+			if (y) this.container.scrollTop = scrollTop;
 		} else {
 			window.scrollBy(x * dir, y * dir);
 		}
@@ -873,9 +899,30 @@ class DefaultViewManager {
 			this.ignore = true;
 		}
 
+		let dir = this.settings.direction === "rtl" ? -1 : 1;
 		if (!this.settings.fullsize) {
-			this.container.scrollLeft = x;
-			this.container.scrollTop = y;
+			if (x) {
+				this.container.scrollLeft += x * dir;
+				const absX = Math.abs(x);
+				const remainder = this.container.scrollLeft % absX;
+				if (Math.abs(absX - remainder) >= 1) {
+					// Determine if the current scroll position is closer to the next page or current page.
+					const compensationDir = Math.round(remainder / absX) === 1 ? 1 : -1;
+					// Compensate it by 1 pixel.
+					this.container.scrollLeft += compensationDir;
+				}
+			}
+			if (y) {
+				this.container.scrollTop += y;
+				const absY = Math.abs(y);
+				const remainder = this.container.scrollTop % absY;
+				if (Math.abs(absY - remainder) >= 1) {
+					// Determine if the current scroll position is closer to the next page or current page.
+					const compensationDir = Math.round(remainder / absY) === 1 ? 1 : -1;
+					// Compensate it by 1 pixel.
+					this.container.scrollTop += compensationDir;
+				}
+			}
 		} else {
 			window.scrollTo(x, y);
 		}
@@ -946,7 +993,16 @@ class DefaultViewManager {
 		this._stageSize = this.stage.size();
 
 		if (!this.isPaginated) {
-			this.layout.calculate(this._stageSize.width, this._stageSize.height);
+			let width;
+			let height;
+			if (this.settings.axis === "vertical") {
+				width = this._stageSize.width - (this.settings.scrollbarWidth | 0);
+				height = this._stageSize.height;
+			} else {
+				width = this._stageSize.width;
+				height = this._stageSize.height - (this.settings.scrollbarWidth | 0);
+			}
+			this.layout.calculate(width, height, undefined, this.settings.axis);
 		} else {
 			this.layout.calculate(
 				this._stageSize.width,

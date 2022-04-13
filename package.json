@@ -1,6 +1,6 @@
 {
   "name": "epubjs-cr",
-  "version": "0.3.93",
+  "version": "0.3.98",
   "description": "Parse and Render Epubs for Clean Reader",
   "main": "lib/index.js",
   "module": "src/index.js",
