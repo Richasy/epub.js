@@ -1,11 +1,11 @@
 {
-  "name": "epubjs",
+  "name": "epubjs-cr",
   "version": "0.3.93",
-  "description": "Parse and Render Epubs",
+  "description": "Parse and Render Epubs for Clean Reader",
   "main": "lib/index.js",
   "module": "src/index.js",
   "types": "types/index.d.ts",
-  "repository": "https://github.com/futurepress/epub.js",
+  "repository": "https://github.com/richasy/epub.js",
   "directories": {
     "test": "test"
   },
@@ -16,15 +16,15 @@
     "docs:md": "documentation build src/epub.js -f md -o documentation/md/API.md",
     "lint": "eslint -c .eslintrc.js src; exit 0",
     "start": "webpack-dev-server --inline --d",
-    "build": "NODE_ENV=production webpack --progress",
-    "minify": "NODE_ENV=production MINIMIZE=true webpack --progress",
-    "legacy": "NODE_ENV=production LEGACY=true webpack --progress",
-    "productionLegacy": "NODE_ENV=production MINIMIZE=true LEGACY=true webpack --progress",
+    "build": "set NODE_ENV=production && webpack --progress",
+    "minify": "set NODE_ENV=production && set MINIMIZE=true && webpack --progress",
+    "legacy": "set NODE_ENV=production && set LEGACY=true && webpack --progress",
+    "productionLegacy": "set NODE_ENV=production && set MINIMIZE=true && set LEGACY=true && webpack --progress",
     "compile": "babel -d lib/ src/",
     "watch": "babel --watch -d lib/ src/",
     "prepare": "npm run compile && npm run build && npm run minify && npm run legacy && npm run productionLegacy"
   },
-  "author": "fchasen@gmail.com",
+  "author": "zar234@qq.com",
   "license": "BSD-2-Clause",
   "devDependencies": {
     "@babel/cli": "^7.15.7",

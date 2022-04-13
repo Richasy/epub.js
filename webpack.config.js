@@ -20,7 +20,7 @@ if (MINIMIZE) {
 }
 
 module.exports = {
-	mode: process.env.NODE_ENV,
+	mode: "production",
 	entry: {
 		"epub": "./src/epub.js",
 	},

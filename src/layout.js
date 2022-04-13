@@ -113,8 +113,11 @@ class Layout {
 		var section = Math.floor(width / 12);
 
 		var columnWidth;
+		var columnHeight;
 		var spreadWidth;
+		var spreadHeight;
 		var pageWidth;
+		var pageHeight;
 		var delta;
 
 		if (this._spread && width >= this._minSpreadWidth) {
@@ -138,16 +141,22 @@ class Layout {
 			// gap = gap / divisor;
 			columnWidth = (width / divisor) - gap;
 			pageWidth = columnWidth + gap;
+			columnHeight = (height / divisor) - gap;
+			pageHeight = columnHeight + gap;
 		} else {
 			columnWidth = width;
 			pageWidth = width;
+			columnWidth = height;
+			pageHeight = height;
 		}
 
 		if (this.name === "pre-paginated" && divisor > 1) {
 			width = columnWidth;
+			height = columnHeight;
 		}
 
 		spreadWidth = (columnWidth * divisor) + gap;
+		spreadHeight = (columnHeight * divisor) + gap;
 
 		delta = width;
 
@@ -155,9 +164,12 @@ class Layout {
 		this.height = height;
 		this.spreadWidth = spreadWidth;
 		this.pageWidth = pageWidth;
+		this.spreadHeight = spreadHeight;
+		this.pageHeight = pageHeight;
 		this.delta = delta;
 
 		this.columnWidth = columnWidth;
+		this.columnHeight = columnHeight;
 		this.gap = gap;
 		this.divisor = divisor;
 
@@ -175,9 +187,12 @@ class Layout {
 			width,
 			height,
 			spreadWidth,
+			spreadHeight,
 			pageWidth,
+			pageHeight,
 			delta,
 			columnWidth,
+			columnHeight,
 			gap,
 			divisor
 		});

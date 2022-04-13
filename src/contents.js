@@ -1,8 +1,8 @@
 import EventEmitter from "event-emitter";
-import {isNumber, prefixed, borders, defaults} from "./utils/core";
+import { isNumber, prefixed, borders, defaults } from "./utils/core";
 import EpubCFI from "./epubcfi";
 import Mapping from "./mapping";
-import {replaceLinks} from "./utils/replacements";
+import { replaceLinks } from "./utils/replacements";
 import { EPUBJS_VERSION, EVENTS, DOM_EVENTS } from "./utils/constants";
 
 const hasNavigator = typeof (navigator) !== "undefined";
@@ -27,7 +27,7 @@ class Contents {
 		this.epubcfi = new EpubCFI();
 
 		this.document = doc;
-		this.documentElement =  this.document.documentElement;
+		this.documentElement = this.document.documentElement;
 		this.content = content || this.document.body;
 		this.window = this.document.defaultView;
 
@@ -289,7 +289,7 @@ class Contents {
 		* check for the viewport size
 		* <meta name="viewport" content="width=1024,height=697" />
 		*/
-		if($viewport && $viewport.hasAttribute("content")) {
+		if ($viewport && $viewport.hasAttribute("content")) {
 			let content = $viewport.getAttribute("content");
 			let _width = content.match(/width\s*=\s*([^,]*)/);
 			let _height = content.match(/height\s*=\s*([^,]*)/);
@@ -298,22 +298,22 @@ class Contents {
 			let _maximum = content.match(/maximum-scale\s*=\s*([^,]*)/);
 			let _scalable = content.match(/user-scalable\s*=\s*([^,]*)/);
 
-			if(_width && _width.length && typeof _width[1] !== "undefined"){
+			if (_width && _width.length && typeof _width[1] !== "undefined") {
 				parsed.width = _width[1];
 			}
-			if(_height && _height.length && typeof _height[1] !== "undefined"){
+			if (_height && _height.length && typeof _height[1] !== "undefined") {
 				parsed.height = _height[1];
 			}
-			if(_scale && _scale.length && typeof _scale[1] !== "undefined"){
+			if (_scale && _scale.length && typeof _scale[1] !== "undefined") {
 				parsed.scale = _scale[1];
 			}
-			if(_minimum && _minimum.length && typeof _minimum[1] !== "undefined"){
+			if (_minimum && _minimum.length && typeof _minimum[1] !== "undefined") {
 				parsed.minimum = _minimum[1];
 			}
-			if(_maximum && _maximum.length && typeof _maximum[1] !== "undefined"){
+			if (_maximum && _maximum.length && typeof _maximum[1] !== "undefined") {
 				parsed.maximum = _maximum[1];
 			}
-			if(_scalable && _scalable.length && typeof _scalable[1] !== "undefined"){
+			if (_scalable && _scalable.length && typeof _scalable[1] !== "undefined") {
 				parsed.scalable = _scalable[1];
 			}
 		}
@@ -493,8 +493,8 @@ class Contents {
 	 */
 	mediaQueryListeners() {
 		var sheets = this.document.styleSheets;
-		var mediaChangeHandler = function(m){
-			if(m.matches && !this._expanding) {
+		var mediaChangeHandler = function (m) {
+			if (m.matches && !this._expanding) {
 				setTimeout(this.expand.bind(this), 1);
 			}
 		}.bind(this);
@@ -507,10 +507,10 @@ class Contents {
 			} catch (e) {
 				return;
 			}
-			if(!rules) return; // Stylesheets changed
+			if (!rules) return; // Stylesheets changed
 			for (var j = 0; j < rules.length; j += 1) {
 				//if (rules[j].constructor === CSSMediaRule) {
-				if(rules[j].media){
+				if (rules[j].media) {
 					var mql = this.window.matchMedia(rules[j].media.mediaText);
 					mql.addListener(mediaChangeHandler);
 					//mql.onchange = mediaChangeHandler;
@@ -561,7 +561,7 @@ class Contents {
 			img = images[i];
 
 			if (typeof img.naturalWidth !== "undefined" &&
-					img.naturalWidth === 0) {
+				img.naturalWidth === 0) {
 				img.onload = this.expand.bind(this);
 			}
 		}
@@ -587,7 +587,7 @@ class Contents {
 	 * @returns {element} documentElement
 	 */
 	root() {
-		if(!this.document) return null;
+		if (!this.document) return null;
 		return this.document.documentElement;
 	}
 
@@ -599,18 +599,18 @@ class Contents {
 	 */
 	locationOf(target, ignoreClass) {
 		var position;
-		var targetPos = {"left": 0, "top": 0};
+		var targetPos = { "left": 0, "top": 0 };
 
-		if(!this.document) return targetPos;
+		if (!this.document) return targetPos;
 
-		if(this.epubcfi.isCfiString(target)) {
+		if (this.epubcfi.isCfiString(target)) {
 			let range = new EpubCFI(target).toRange(this.document, ignoreClass);
 
-			if(range) {
+			if (range) {
 				try {
 					if (!range.endContainer ||
 						(range.startContainer == range.endContainer
-						&& range.startOffset == range.endOffset)) {
+							&& range.startOffset == range.endOffset)) {
 						// If the end for the range is not set, it results in collapsed becoming
 						// true. This in turn leads to inconsistent behaviour when calling
 						// getBoundingRect. Wrong bounds lead to the wrong page being displayed.
@@ -655,17 +655,19 @@ class Contents {
 							console.error(e, e.stack);
 						}
 					} else {
-						position = range.getBoundingClientRect();
+						// range.toString() might be an empty string and range.getBoundingClientRect() returns a all-zeros position.
+						// Thus, we use the parent element containing the range to get a valid bounding rect.
+						position = range.startContainer.parentElement.getBoundingClientRect();
 					}
 				}
 			}
 
-		} else if(typeof target === "string" &&
+		} else if (typeof target === "string" &&
 			target.indexOf("#") > -1) {
 
-			let id = target.substring(target.indexOf("#")+1);
+			let id = target.substring(target.indexOf("#") + 1);
 			let el = this.document.getElementById(id);
-			if(el) {
+			if (el) {
 				if (isWebkit) {
 					// Webkit reports incorrect bounding rects in Columns
 					let newRange = new Range();
@@ -690,17 +692,17 @@ class Contents {
 	 * @param {string} src url
 	 */
 	addStylesheet(src) {
-		return new Promise(function(resolve, reject){
+		return new Promise(function (resolve, reject) {
 			var $stylesheet;
 			var ready = false;
 
-			if(!this.document) {
+			if (!this.document) {
 				resolve(false);
 				return;
 			}
 
 			// Check if link already exists
-			$stylesheet = this.document.querySelector("link[href='"+src+"']");
+			$stylesheet = this.document.querySelector("link[href='" + src + "']");
 			if ($stylesheet) {
 				resolve(true);
 				return; // already present
@@ -710,8 +712,8 @@ class Contents {
 			$stylesheet.type = "text/css";
 			$stylesheet.rel = "stylesheet";
 			$stylesheet.href = src;
-			$stylesheet.onload = $stylesheet.onreadystatechange = function() {
-				if ( !ready && (!this.readyState || this.readyState == "complete") ) {
+			$stylesheet.onload = $stylesheet.onreadystatechange = function () {
+				if (!ready && (!this.readyState || this.readyState == "complete")) {
 					ready = true;
 					// Let apply
 					setTimeout(() => {
@@ -729,7 +731,7 @@ class Contents {
 		var styleEl;
 		key = "epubjs-inserted-css-" + (key || '');
 
-		if(!this.document) return false;
+		if (!this.document) return false;
 
 		// Check if link already exists
 		styleEl = this.document.getElementById(key);
@@ -748,7 +750,7 @@ class Contents {
 	 * @param {string} key If the key is the same, the CSS will be replaced instead of inserted
 	 */
 	addStylesheetCss(serializedCss, key) {
-		if(!this.document || !serializedCss) return false;
+		if (!this.document || !serializedCss) return false;
 
 		var styleEl;
 		styleEl = this._getStylesheetNode(key);
@@ -767,7 +769,7 @@ class Contents {
 	addStylesheetRules(rules, key) {
 		var styleSheet;
 
-		if(!this.document || !rules || rules.length === 0) return;
+		if (!this.document || !rules || rules.length === 0) return;
 
 		// Grab style sheet
 		styleSheet = this._getStylesheetNode(key).sheet;
@@ -819,11 +821,11 @@ class Contents {
 	 */
 	addScript(src) {
 
-		return new Promise(function(resolve, reject){
+		return new Promise(function (resolve, reject) {
 			var $script;
 			var ready = false;
 
-			if(!this.document) {
+			if (!this.document) {
 				resolve(false);
 				return;
 			}
@@ -832,10 +834,10 @@ class Contents {
 			$script.type = "text/javascript";
 			$script.async = true;
 			$script.src = src;
-			$script.onload = $script.onreadystatechange = function() {
-				if ( !ready && (!this.readyState || this.readyState == "complete") ) {
+			$script.onload = $script.onreadystatechange = function () {
+				if (!ready && (!this.readyState || this.readyState == "complete")) {
 					ready = true;
-					setTimeout(function(){
+					setTimeout(function () {
 						resolve(true);
 					}, 1);
 				}
@@ -853,7 +855,7 @@ class Contents {
 	addClass(className) {
 		var content;
 
-		if(!this.document) return;
+		if (!this.document) return;
 
 		content = this.content || this.document.body;
 
@@ -870,7 +872,7 @@ class Contents {
 	removeClass(className) {
 		var content;
 
-		if(!this.document) return;
+		if (!this.document) return;
 
 		content = this.content || this.document.body;
 
@@ -884,14 +886,14 @@ class Contents {
 	 * Add DOM event listeners
 	 * @private
 	 */
-	addEventListeners(){
-		if(!this.document) {
+	addEventListeners() {
+		if (!this.document) {
 			return;
 		}
 
 		this._triggerEvent = this.triggerEvent.bind(this);
 
-		DOM_EVENTS.forEach(function(eventName){
+		DOM_EVENTS.forEach(function (eventName) {
 			this.document.addEventListener(eventName, this._triggerEvent, { passive: true });
 		}, this);
 
@@ -901,11 +903,11 @@ class Contents {
 	 * Remove DOM event listeners
 	 * @private
 	 */
-	removeEventListeners(){
-		if(!this.document) {
+	removeEventListeners() {
+		if (!this.document) {
 			return;
 		}
-		DOM_EVENTS.forEach(function(eventName){
+		DOM_EVENTS.forEach(function (eventName) {
 			this.document.removeEventListener(eventName, this._triggerEvent, { passive: true });
 		}, this);
 		this._triggerEvent = undefined;
@@ -915,7 +917,7 @@ class Contents {
 	 * Emit passed browser events
 	 * @private
 	 */
-	triggerEvent(e){
+	triggerEvent(e) {
 		this.emit(e.type, e);
 	}
 
@@ -923,8 +925,8 @@ class Contents {
 	 * Add listener for text selection
 	 * @private
 	 */
-	addSelectionListeners(){
-		if(!this.document) {
+	addSelectionListeners() {
+		if (!this.document) {
 			return;
 		}
 		this._onSelectionChange = this.onSelectionChange.bind(this);
@@ -935,8 +937,8 @@ class Contents {
 	 * Remove listener for text selection
 	 * @private
 	 */
-	removeSelectionListeners(){
-		if(!this.document) {
+	removeSelectionListeners() {
+		if (!this.document) {
 			return;
 		}
 		this.document.removeEventListener("selectionchange", this._onSelectionChange, { passive: true });
@@ -947,11 +949,11 @@ class Contents {
 	 * Handle getting text on selection
 	 * @private
 	 */
-	onSelectionChange(e){
+	onSelectionChange(e) {
 		if (this.selectionEndTimeout) {
 			clearTimeout(this.selectionEndTimeout);
 		}
-		this.selectionEndTimeout = setTimeout(function() {
+		this.selectionEndTimeout = setTimeout(function () {
 			var selection = this.window.getSelection();
 			this.triggerSelectedEvent(selection);
 		}.bind(this), 250);
@@ -961,12 +963,12 @@ class Contents {
 	 * Emit event on text selection
 	 * @private
 	 */
-	triggerSelectedEvent(selection){
+	triggerSelectedEvent(selection) {
 		var range, cfirange;
 
 		if (selection && selection.rangeCount > 0) {
 			range = selection.getRangeAt(0);
-			if(!range.collapsed) {
+			if (!range.collapsed) {
 				// cfirange = this.section.cfiFromRange(range);
 				cfirange = new EpubCFI(range, this.cfiBase).toString();
 				this.emit(EVENTS.CONTENTS.SELECTED, cfirange);
@@ -981,7 +983,7 @@ class Contents {
 	 * @param {string} [ignoreClass]
 	 * @returns {Range} range
 	 */
-	range(_cfi, ignoreClass){
+	range(_cfi, ignoreClass) {
 		var cfi = new EpubCFI(_cfi);
 		return cfi.toRange(this.document, ignoreClass);
 	}
@@ -992,7 +994,7 @@ class Contents {
 	 * @param {string} [ignoreClass]
 	 * @returns {EpubCFI} cfi
 	 */
-	cfiFromRange(range, ignoreClass){
+	cfiFromRange(range, ignoreClass) {
 		return new EpubCFI(range, this.cfiBase, ignoreClass).toString();
 	}
 
@@ -1002,12 +1004,12 @@ class Contents {
 	 * @param {string} [ignoreClass]
 	 * @returns {EpubCFI} cfi
 	 */
-	cfiFromNode(node, ignoreClass){
+	cfiFromNode(node, ignoreClass) {
 		return new EpubCFI(node, this.cfiBase, ignoreClass).toString();
 	}
 
 	// TODO: find where this is used - remove?
-	map(layout){
+	map(layout) {
 		var map = new Mapping(layout);
 		return map.section();
 	}
@@ -1017,7 +1019,7 @@ class Contents {
 	 * @param {number} [width]
 	 * @param {number} [height]
 	 */
-	size(width, height){
+	size(width, height) {
 		var viewport = { scale: 1.0, scalable: "no" };
 
 		this.layoutStyle("scrolling");
@@ -1025,7 +1027,7 @@ class Contents {
 		if (width >= 0) {
 			this.width(width);
 			viewport.width = width;
-			this.css("padding", "0 "+(width/12)+"px");
+			this.css("padding", "0 " + (width / 12) + "px");
 		}
 
 		if (height >= 0) {
@@ -1047,7 +1049,7 @@ class Contents {
 	 * @param {number} columnWidth
 	 * @param {number} gap
 	 */
-	columns(width, height, columnWidth, gap, dir){
+	columns(width, height, columnWidth, gap, dir) {
 		let COLUMN_AXIS = prefixed("column-axis");
 		let COLUMN_GAP = prefixed("column-gap");
 		let COLUMN_WIDTH = prefixed("column-width");
@@ -1094,8 +1096,8 @@ class Contents {
 
 		this.css(COLUMN_FILL, "auto");
 
-		this.css(COLUMN_GAP, gap+"px");
-		this.css(COLUMN_WIDTH, columnWidth+"px");
+		this.css(COLUMN_GAP, gap + "px");
+		this.css(COLUMN_WIDTH, columnWidth + "px");
 
 		// Fix glyph clipping in WebKit
 		// https://github.com/futurepress/epub.js/issues/983
@@ -1108,14 +1110,14 @@ class Contents {
 	 * @param {number} offsetX
 	 * @param {number} offsetY
 	 */
-	scaler(scale, offsetX, offsetY){
+	scaler(scale, offsetX, offsetY) {
 		var scaleStr = "scale(" + scale + ")";
 		var translateStr = "";
 		// this.css("position", "absolute"));
 		this.css("transform-origin", "top left");
 
 		if (offsetX >= 0 || offsetY >= 0) {
-			translateStr = " translate(" + (offsetX || 0 )+ "px, " + (offsetY || 0 )+ "px )";
+			translateStr = " translate(" + (offsetX || 0) + "px, " + (offsetY || 0) + "px )";
 		}
 
 		this.css("transform", scaleStr + translateStr);
@@ -1126,7 +1128,7 @@ class Contents {
 	 * @param {number} width
 	 * @param {number} height
 	 */
-	fit(width, height, section){
+	fit(width, height, section) {
 		var viewport = this.viewport();
 		var viewportWidth = parseInt(viewport.width);
 		var viewportHeight = parseInt(viewport.height);
