@@ -661,7 +661,7 @@ class DefaultViewManager {
 
 	currentLocation() {
 		this.updateLayout();
-		if (this.isPaginated) {
+		if (this.isPaginated && this.settings.axis === "horizontal") {
 			this.location = this.paginatedLocation();
 		} else {
 			this.location = this.scrolledLocation();
@@ -741,15 +741,12 @@ class DefaultViewManager {
 	paginatedLocation() {
 		let visible = this.visible();
 		let container = this.container.getBoundingClientRect();
-		let vertical = (this.settings.axis === "vertical");
 
 		let left = 0;
-		let top = 0;
 		let used = 0;
 
 		if (this.settings.fullsize) {
 			left = window.scrollX;
-			top = window.scrollY;
 		}
 
 		let sections = visible.map((view) => {
@@ -764,36 +761,29 @@ class DefaultViewManager {
 			let end;
 			let pageWidth;
 
-			if (!vertical && this.settings.direction === "rtl") {
+			if (this.settings.direction === "rtl") {
 				offset = container.right - left;
 				pageWidth = Math.min(Math.abs(offset - position.left), this.layout.width) - used;
 				end = position.width - (position.right - offset) - used;
 				start = end - pageWidth;
 			} else {
-				if (vertical) {
-					offset = container.top + top;
-					pageHeight = Math.min(position.bottom - offset, this.layout.height) - used;
-					start = offset - position.top + used;
-					end = start + pageHeight;
-				} else {
-					offset = container.left + left;
-					pageWidth = Math.min(position.right - offset, this.layout.width) - used;
-					start = offset - position.left + used;
-					end = start + pageWidth;
-				}
+				offset = container.left + left;
+				pageWidth = Math.min(position.right - offset, this.layout.width) - used;
+				start = offset - position.left + used;
+				end = start + pageWidth;
 			}
 
 			start = Math.ceil(start);
 			end = Math.ceil(end);
 
-			used += vertical ? pageHeight : pageWidth;
+			used += pageWidth;
 
 			let mapping = this.mapping.page(view.contents, view.section.cfiBase, start, end);
 
-			let totalPages = this.layout.count(vertical ? height : width).pages;
-			let startPage = Math.floor(start / (vertical ? this.layout.pageHeight : this.layout.pageWidth));
+			let totalPages = this.layout.count(width).pages;
+			let startPage = Math.floor(start / this.layout.pageWidth);
 			let pages = [];
-			let endPage = Math.floor(end / (vertical ? this.layout.pageHeight : this.layout.pageWidth));
+			let endPage = Math.floor(end / this.layout.pageWidth);
 
 			// start page should not be negative
 			if (startPage < 0) {
@@ -802,7 +792,7 @@ class DefaultViewManager {
 			}
 
 			// Reverse page counts for rtl
-			if (!vertical && this.settings.direction === "rtl") {
+			if (this.settings.direction === "rtl") {
 				let tempStartPage = startPage;
 				startPage = totalPages - endPage;
 				endPage = totalPages - tempStartPage;
@@ -899,30 +889,9 @@ class DefaultViewManager {
 			this.ignore = true;
 		}
 
-		let dir = this.settings.direction === "rtl" ? -1 : 1;
 		if (!this.settings.fullsize) {
-			if (x) {
-				this.container.scrollLeft += x * dir;
-				const absX = Math.abs(x);
-				const remainder = this.container.scrollLeft % absX;
-				if (Math.abs(absX - remainder) >= 1) {
-					// Determine if the current scroll position is closer to the next page or current page.
-					const compensationDir = Math.round(remainder / absX) === 1 ? 1 : -1;
-					// Compensate it by 1 pixel.
-					this.container.scrollLeft += compensationDir;
-				}
-			}
-			if (y) {
-				this.container.scrollTop += y;
-				const absY = Math.abs(y);
-				const remainder = this.container.scrollTop % absY;
-				if (Math.abs(absY - remainder) >= 1) {
-					// Determine if the current scroll position is closer to the next page or current page.
-					const compensationDir = Math.round(remainder / absY) === 1 ? 1 : -1;
-					// Compensate it by 1 pixel.
-					this.container.scrollTop += compensationDir;
-				}
-			}
+			this.container.scrollLeft = x;
+			this.container.scrollTop = y;
 		} else {
 			window.scrollTo(x, y);
 		}
